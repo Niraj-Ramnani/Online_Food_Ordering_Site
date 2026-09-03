@@ -1,27 +1,22 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.models.food_item import FoodItem
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.config.database import Base
-from app.models.user import User
+from app.models.restaurant import Restaurant
 
 
-class Restaurant(Base):
-    __tablename__ = "restaurants"
+class FoodItem(Base):
+    __tablename__ = "food_items"
 
     id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True,
     )
 
-    seller_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
-        unique=True,
+    restaurant_id: Mapped[int] = mapped_column(
+        ForeignKey("restaurants.id"),
         nullable=False,
     )
 
@@ -35,8 +30,13 @@ class Restaurant(Base):
         nullable=True,
     )
 
-    address: Mapped[str] = mapped_column(
-        String(255),
+    category: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
+
+    price: Mapped[float] = mapped_column(
+        Numeric(10, 2),
         nullable=False,
     )
 
@@ -45,15 +45,9 @@ class Restaurant(Base):
         nullable=True,
     )
 
-    is_verified: Mapped[bool] = mapped_column(
+    is_available: Mapped[bool] = mapped_column(
         Boolean,
-        default=False,
-        nullable=False,
-    )
-
-    is_open: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
+        default=True,
         nullable=False,
     )
 
@@ -70,11 +64,7 @@ class Restaurant(Base):
         nullable=False,
     )
 
-    seller: Mapped["User"] = relationship(
-        "User",
-        back_populates="restaurant",
+    restaurant: Mapped["Restaurant"] = relationship(
+        "Restaurant",
+        back_populates="food_items",
     )
-    food_items: Mapped[list["FoodItem"]] = relationship(
-    "FoodItem",
-    back_populates="restaurant",
-)
