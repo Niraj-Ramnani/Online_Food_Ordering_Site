@@ -24,6 +24,13 @@ from app.schemas.food_item import (
     FoodItemResponse,
     UpdateFoodItemRequest,
 )
+from app.schemas.order import (
+    CheckoutRequest,
+    OrderItemResponse,
+    OrderResponse,
+    OrderRestaurantResponse,
+    UpdateOrderStatusRequest,
+)
 from app.schemas.restaurant import (
     CreateRestaurantRequest,
     PublicRestaurantResponse,
@@ -56,4 +63,9 @@ __all__ = [
     "CartItemResponse",
     "CartRestaurantResponse",
     "CartResponse",
+    "CheckoutRequest",
+    "UpdateOrderStatusRequest",
+    "OrderItemResponse",
+    "OrderRestaurantResponse",
+    "OrderResponse",
 ]
