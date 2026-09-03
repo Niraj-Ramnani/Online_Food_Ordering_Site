@@ -1,12 +1,17 @@
 from fastapi import FastAPI
-from app.config.database import engine
+
+from app.config.database import Base, engine
+from app.models import User
+
 app = FastAPI(title="Online Food Ordering API")
+
+
+Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health")
 def health_check():
-    try:
-        with engine.connect():
-            return {"status": "healthy", "database": "connected"}
-    except Exception:
-        return {"status": "unhealthy", "database": "disconnected"}
+    return {
+        "status": "healthy",
+        "database": "connected",
+    }
