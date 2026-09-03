@@ -1,3 +1,4 @@
+import asyncio
 from decimal import Decimal
 from fastapi import HTTPException, status
 
@@ -11,6 +12,8 @@ from app.repositories.order_item_repository import OrderItemRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.restaurant_repository import RestaurantRepository
 from app.schemas.order import CheckoutRequest
+from app.services.notification_service import NotificationService
+from app.websocket.connection_manager import manager
 
 VALID_SELLER_TRANSITIONS: dict[OrderStatus, list[OrderStatus]] = {
     OrderStatus.PLACED: [OrderStatus.ACCEPTED, OrderStatus.REJECTED],
@@ -23,9 +26,29 @@ VALID_SELLER_TRANSITIONS: dict[OrderStatus, list[OrderStatus]] = {
     OrderStatus.REJECTED: [],
 }
 
+STATUS_TITLE_MAP = {
+    OrderStatus.ACCEPTED: "Order Accepted",
+    OrderStatus.PREPARING: "Order Preparing",
+    OrderStatus.READY: "Order Ready",
+    OrderStatus.OUT_FOR_DELIVERY: "Order Out For Delivery",
+    OrderStatus.DELIVERED: "Order Delivered",
+    OrderStatus.REJECTED: "Order Rejected",
+    OrderStatus.CANCELLED: "Order Cancelled",
+}
+
+STATUS_MESSAGE_MAP = {
+    OrderStatus.ACCEPTED: "Your order has been accepted by the restaurant.",
+    OrderStatus.PREPARING: "Your order is currently being prepared.",
+    OrderStatus.READY: "Your order is ready for delivery.",
+    OrderStatus.OUT_FOR_DELIVERY: "Your order is out for delivery.",
+    OrderStatus.DELIVERED: "Your order has been delivered. Enjoy your meal!",
+    OrderStatus.REJECTED: "The restaurant was unable to accept your order.",
+    OrderStatus.CANCELLED: "Your order was cancelled.",
+}
+
 
 class OrderService:
-    """Service containing order lifecycle, checkout, and status transition business logic."""
+    """Service containing order lifecycle, checkout, status transitions, notifications, and real-time updates."""
 
     def __init__(
         self,
@@ -36,6 +59,7 @@ class OrderService:
         address_repo: AddressRepository,
         restaurant_repo: RestaurantRepository,
         food_repo: FoodItemRepository,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self.order_repo = order_repo
         self.order_item_repo = order_item_repo
@@ -44,6 +68,18 @@ class OrderService:
         self.address_repo = address_repo
         self.restaurant_repo = restaurant_repo
         self.food_repo = food_repo
+        self.notification_service = notification_service
+
+    def _dispatch_websocket_event(self, user_id: int, payload: dict) -> None:
+        """Helper to safely schedule async WebSocket event delivery."""
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(manager.send_personal_message(user_id, payload))
+        except RuntimeError:
+            try:
+                asyncio.run(manager.send_personal_message(user_id, payload))
+            except Exception:
+                pass
 
     def checkout(
         self,
@@ -145,6 +181,38 @@ class OrderService:
         cart.restaurant_id = None
         self.cart_repo.update(cart)
 
+        # 8. Trigger Notifications & Real-Time Events
+        if self.notification_service:
+            # Customer Notification
+            self.notification_service.create_and_send_notification(
+                user_id=user_id,
+                title="Order Placed",
+                message=f"Your order #{created_order.id} for Rs. {created_order.total_amount} has been placed.",
+                notification_type="ORDER_PLACED",
+                order_id=created_order.id,
+                sound=True,
+            )
+
+            # Seller Notification
+            if restaurant.seller_id:
+                self.notification_service.create_and_send_notification(
+                    user_id=restaurant.seller_id,
+                    title="New Order Received",
+                    message=f"New order #{created_order.id} received for {restaurant.name} (Rs. {created_order.total_amount}).",
+                    notification_type="NEW_ORDER",
+                    order_id=created_order.id,
+                    sound=True,
+                )
+                self._dispatch_websocket_event(
+                    restaurant.seller_id,
+                    {
+                        "type": "new_order_received",
+                        "order_id": created_order.id,
+                        "status": "PLACED",
+                        "total_amount": str(created_order.total_amount),
+                    },
+                )
+
         return created_order
 
     def get_user_orders(self, user_id: int) -> list[Order]:
@@ -171,7 +239,38 @@ class OrderService:
             )
 
         order.status = OrderStatus.CANCELLED
-        return self.order_repo.update(order)
+        updated_order = self.order_repo.update(order)
+
+        # Notify Customer & Seller
+        if self.notification_service:
+            self.notification_service.create_and_send_notification(
+                user_id=user_id,
+                title="Order Cancelled",
+                message=f"Your order #{order.id} has been cancelled.",
+                notification_type="ORDER_CANCELLED",
+                order_id=order.id,
+                sound=False,
+            )
+            seller_id = order.restaurant.seller_id if order.restaurant else None
+            if seller_id:
+                self.notification_service.create_and_send_notification(
+                    user_id=seller_id,
+                    title="Order Cancelled",
+                    message=f"Customer cancelled Order #{order.id}.",
+                    notification_type="ORDER_CANCELLED",
+                    order_id=order.id,
+                    sound=False,
+                )
+                self._dispatch_websocket_event(
+                    seller_id,
+                    {
+                        "type": "order_status_updated",
+                        "order_id": order.id,
+                        "status": "CANCELLED",
+                    },
+                )
+
+        return updated_order
 
     def get_seller_orders(self, seller_id: int) -> list[Order]:
         """Fetch all orders placed at the authenticated seller's restaurant."""
@@ -217,4 +316,29 @@ class OrderService:
             )
 
         order.status = new_status
-        return self.order_repo.update(order)
+        updated_order = self.order_repo.update(order)
+
+        # Notify Customer and send real-time WebSocket update
+        if self.notification_service:
+            title = STATUS_TITLE_MAP.get(new_status, f"Order {new_status.value}")
+            msg = STATUS_MESSAGE_MAP.get(
+                new_status, f"Your order #{order.id} status updated to {new_status.value}."
+            )
+            self.notification_service.create_and_send_notification(
+                user_id=order.user_id,
+                title=title,
+                message=msg,
+                notification_type=f"ORDER_{new_status.value}",
+                order_id=order.id,
+                sound=True,
+            )
+            self._dispatch_websocket_event(
+                order.user_id,
+                {
+                    "type": "order_status_updated",
+                    "order_id": order.id,
+                    "status": new_status.value,
+                },
+            )
+
+        return updated_order

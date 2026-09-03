@@ -26,3 +26,9 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def update(self, user: User) -> User:
+        """Commit changes to an existing user."""
+        self.db.commit()
+        self.db.refresh(user)
+        return user

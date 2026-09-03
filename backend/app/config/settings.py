@@ -31,3 +31,18 @@ CORS_ORIGINS: list[str] = [
     for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
     if origin.strip()
 ]
+
+RAZORPAY_KEY_ID: str = os.getenv(
+    "RAZORPAY_KEY_ID",
+    "rzp_test_TXfRQ9VKtlxYC3",
+)
+
+RAZORPAY_KEY_SECRET: str = os.getenv(
+    "RAZORPAY_KEY_SECRET",
+    "VG3lAs1tImwTDQOiR6kKbSZh",
+)
+
+RAZORPAY_WEBHOOK_SECRET: str = os.getenv(
+    "RAZORPAY_WEBHOOK_SECRET",
+    "test_webhook_secret_123",
+)

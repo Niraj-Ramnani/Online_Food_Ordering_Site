@@ -9,6 +9,7 @@ from app.repositories.address_repository import AddressRepository
 from app.repositories.cart_item_repository import CartItemRepository
 from app.repositories.cart_repository import CartRepository
 from app.repositories.food_item_repository import FoodItemRepository
+from app.repositories.notification_repository import NotificationRepository
 from app.repositories.order_item_repository import OrderItemRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.restaurant_repository import RestaurantRepository
@@ -17,6 +18,7 @@ from app.schemas.order import (
     OrderResponse,
     UpdateOrderStatusRequest,
 )
+from app.services.notification_service import NotificationService
 from app.services.order_service import OrderService
 
 # User Orders Router
@@ -27,7 +29,7 @@ seller_order_router = APIRouter(prefix="/api/v1/seller/orders", tags=["Seller Or
 
 
 def get_order_controller(db: Session = Depends(get_db)) -> OrderController:
-    """Dependency provider for OrderController with all necessary repositories and service injected."""
+    """Dependency provider for OrderController with all necessary repositories, notification service and service injected."""
     order_repo = OrderRepository(db)
     order_item_repo = OrderItemRepository(db)
     cart_repo = CartRepository(db)
@@ -35,6 +37,8 @@ def get_order_controller(db: Session = Depends(get_db)) -> OrderController:
     address_repo = AddressRepository(db)
     restaurant_repo = RestaurantRepository(db)
     food_repo = FoodItemRepository(db)
+    notification_repo = NotificationRepository(db)
+    notification_service = NotificationService(notification_repo)
 
     service = OrderService(
         order_repo=order_repo,
@@ -44,6 +48,7 @@ def get_order_controller(db: Session = Depends(get_db)) -> OrderController:
         address_repo=address_repo,
         restaurant_repo=restaurant_repo,
         food_repo=food_repo,
+        notification_service=notification_service,
     )
     return OrderController(service)
 
