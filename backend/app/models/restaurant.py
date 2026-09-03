@@ -1,14 +1,16 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from app.models.food_item import FoodItem
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.config.database import Base
-from app.models.user import User
+
+if TYPE_CHECKING:
+    from app.models.cart import Cart
+    from app.models.food_item import FoodItem
+    from app.models.order import Order
+    from app.models.user import User
 
 
 class Restaurant(Base):
@@ -74,7 +76,18 @@ class Restaurant(Base):
         "User",
         back_populates="restaurant",
     )
+
     food_items: Mapped[list["FoodItem"]] = relationship(
-    "FoodItem",
-    back_populates="restaurant",
-)
+        "FoodItem",
+        back_populates="restaurant",
+    )
+
+    carts: Mapped[list["Cart"]] = relationship(
+        "Cart",
+        back_populates="restaurant",
+    )
+
+    orders: Mapped[list["Order"]] = relationship(
+        "Order",
+        back_populates="restaurant",
+    )

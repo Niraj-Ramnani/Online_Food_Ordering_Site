@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.config.database import Base, engine
-from app.models import User
+import app.models
 
 app = FastAPI(title="Online Food Ordering API")
 
