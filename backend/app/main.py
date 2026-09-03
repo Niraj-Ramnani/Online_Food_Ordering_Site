@@ -5,6 +5,8 @@ from app.config.database import Base, engine
 from app.config.settings import CORS_ORIGINS
 import app.models  # Register all models for SQLAlchemy Base.metadata
 from app.routes.auth_routes import router as auth_router
+from app.routes.food_item_routes import router as food_item_router
+from app.routes.restaurant_routes import router as restaurant_router
 
 app = FastAPI(
     title="Online Food Ordering API",
@@ -26,6 +28,8 @@ Base.metadata.create_all(bind=engine)
 
 # Include Routers
 app.include_router(auth_router)
+app.include_router(restaurant_router)
+app.include_router(food_item_router)
 
 
 @app.get("/health", tags=["Health"])

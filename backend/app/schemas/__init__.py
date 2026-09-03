@@ -5,6 +5,19 @@ from app.schemas.auth import (
     TokenResponse,
     UserResponse,
 )
+from app.schemas.food_item import (
+    CreateFoodItemRequest,
+    FoodItemAvailabilityRequest,
+    FoodItemResponse,
+    UpdateFoodItemRequest,
+)
+from app.schemas.restaurant import (
+    CreateRestaurantRequest,
+    PublicRestaurantResponse,
+    RestaurantResponse,
+    RestaurantStatusUpdateRequest,
+    UpdateRestaurantRequest,
+)
 
 __all__ = [
     "RegisterRequest",
@@ -12,4 +25,13 @@ __all__ = [
     "RefreshTokenRequest",
     "TokenResponse",
     "UserResponse",
+    "CreateRestaurantRequest",
+    "UpdateRestaurantRequest",
+    "RestaurantStatusUpdateRequest",
+    "RestaurantResponse",
+    "PublicRestaurantResponse",
+    "CreateFoodItemRequest",
+    "UpdateFoodItemRequest",
+    "FoodItemAvailabilityRequest",
+    "FoodItemResponse",
 ]
