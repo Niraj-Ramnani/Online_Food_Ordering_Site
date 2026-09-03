@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.restaurant import Restaurant
 from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, String
 from sqlalchemy.orm import Mapped, mapped_column
-
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.config.database import Base
 
 
@@ -68,3 +72,8 @@ class User(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
+    restaurant: Mapped["Restaurant | None"] = relationship(
+    "Restaurant",
+    back_populates="seller",
+    uselist=False,
+)
