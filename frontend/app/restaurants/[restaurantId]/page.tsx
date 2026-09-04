@@ -1,417 +1,273 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { use, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Clock,
-  Flame,
-  MapPin,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  Star,
-  UtensilsCrossed,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { FoodCard } from "@/components/food/FoodCard";
-import { CardSkeleton, LoadingSpinner } from "@/components/ui/Loading";
-import { CartConflictModal } from "@/components/cart/CartConflictModal";
 import { restaurantService } from "@/services/restaurantService";
+import { Restaurant } from "@/types/restaurant";
+import { FoodItem } from "@/types/food";
 import { useCart } from "@/hooks/useCart";
-import { Restaurant, FoodItem } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { FoodCard } from "@/components/food/FoodCard";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import {
+  ArrowLeft,
+  MapPin,
+  ShieldCheck,
+  Store,
+  Clock,
+  ShoppingBag,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 
-const FALLBACK_RESTAURANT: Restaurant = {
-  id: 1,
-  name: "Mario's Authentic Pizzeria",
-  description:
-    "Wood-fired handcrafted Italian pizzas, authentic pasta, freshly baked garlic breads, and classic desserts made with imported Italian flour and San Marzano tomatoes.",
-  address: "742 Evergreen Terrace, Little Italy",
-  image_url:
-    "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&auto=format&fit=crop&q=80",
-  is_verified: true,
-  is_open: true,
-  cuisine: "Italian • Pizza • Pasta",
-  rating: 4.9,
-  delivery_time: "20-30 min",
-  price_range: "$$",
-};
+interface RestaurantDetailsPageProps {
+  params: Promise<{ restaurantId: string }>;
+}
 
-const FALLBACK_FOOD_ITEMS: FoodItem[] = [
-  {
-    id: 1,
-    restaurant_id: 1,
-    name: "Classic Margherita Pizza",
-    category: "Pizzas",
-    description:
-      "Fresh buffalo mozzarella, san marzano tomato sauce, fresh basil leaves, and extra virgin olive oil.",
-    price: "299.00",
-    image_url:
-      "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=800&auto=format&fit=crop&q=80",
-    is_available: true,
-    rating: 4.9,
-    is_veg: true,
-  },
-  {
-    id: 2,
-    restaurant_id: 1,
-    name: "Truffle Mushroom & Provolone Pizza",
-    category: "Pizzas",
-    description:
-      "Wild forest mushrooms, black truffle oil drizzle, caramelized leeks, and aged provolone cheese.",
-    price: "429.00",
-    image_url:
-      "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop&q=80",
-    is_available: true,
-    rating: 4.8,
-    is_veg: true,
-  },
-  {
-    id: 3,
-    restaurant_id: 1,
-    name: "Spicy Pepperoni & Jalapeño",
-    category: "Pizzas",
-    description:
-      "Loaded with artisan sliced beef pepperoni, pickled jalapeño slices, and hot honey drizzle.",
-    price: "449.00",
-    image_url:
-      "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=800&auto=format&fit=crop&q=80",
-    is_available: true,
-    rating: 4.9,
-    is_veg: false,
-  },
-  {
-    id: 4,
-    restaurant_id: 1,
-    name: "Garlic Butter Parmesan Breadsticks",
-    category: "Sides & Starters",
-    description:
-      "Warm oven-baked breadsticks brushed with roasted garlic herb butter, grated parmigiano reggiano.",
-    price: "169.00",
-    image_url:
-      "https://images.unsplash.com/photo-1541745537411-b8046dc6d66c?w=800&auto=format&fit=crop&q=80",
-    is_available: true,
-    rating: 4.7,
-    is_veg: true,
-  },
-  {
-    id: 5,
-    restaurant_id: 1,
-    name: "Creamy Fettuccine Alfredo",
-    category: "Pasta",
-    description:
-      "Al dente fettuccine tossed in a rich butter, heavy cream, and parmesan sauce with fresh parsley.",
-    price: "349.00",
-    image_url:
-      "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=800&auto=format&fit=crop&q=80",
-    is_available: true,
-    rating: 4.6,
-    is_veg: true,
-  },
-  {
-    id: 6,
-    restaurant_id: 1,
-    name: "Classic Italian Tiramisu",
-    category: "Desserts",
-    description:
-      "Espresso-dipped ladyfingers layered with creamy mascarpone mousse and dusted with cocoa powder.",
-    price: "199.00",
-    image_url:
-      "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800&auto=format&fit=crop&q=80",
-    is_available: true,
-    rating: 5.0,
-    is_veg: true,
-  },
-];
+export default function RestaurantDetailsPage({
+  params,
+}: RestaurantDetailsPageProps) {
+  const resolvedParams = use(params);
+  const restaurantId = Number(resolvedParams.restaurantId);
 
-export default function RestaurantDetailPage() {
-  const params = useParams();
-  const restaurantId = Number(params.restaurantId);
-  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchMenu, setSearchMenu] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-
-  const { cart, totalItemsCount } = useCart();
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [cartSuccessMessage, setCartSuccessMessage] = useState<string | null>(
+    null
+  );
+  const [cartErrorMessage, setCartErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
-      if (isNaN(restaurantId)) return;
       setIsLoading(true);
+      setError(null);
       try {
-        const [restData, itemsData] = await Promise.all([
-          restaurantService.getRestaurantById(restaurantId).catch(() => null),
-          restaurantService.getRestaurantFoodItems(restaurantId).catch(() => []),
+        const [rData, fData] = await Promise.all([
+          restaurantService.getPublicRestaurant(restaurantId),
+          restaurantService.getRestaurantFoodItems(restaurantId),
         ]);
-
-        if (restData) {
-          setRestaurant(restData);
-        } else {
-          setRestaurant({ ...FALLBACK_RESTAURANT, id: restaurantId });
-        }
-
-        if (itemsData && itemsData.length > 0) {
-          setFoodItems(itemsData);
-        } else {
-          setFoodItems(FALLBACK_FOOD_ITEMS);
-        }
-      } catch {
-        setRestaurant({ ...FALLBACK_RESTAURANT, id: restaurantId });
-        setFoodItems(FALLBACK_FOOD_ITEMS);
+        setRestaurant(rData);
+        setFoodItems(fData);
+      } catch (err: any) {
+        setError(err.message || "Failed to load restaurant menu.");
       } finally {
         setIsLoading(false);
       }
     }
-
     loadData();
   }, [restaurantId]);
 
+  const handleAddToCart = async (item: FoodItem) => {
+    setCartSuccessMessage(null);
+    setCartErrorMessage(null);
+    try {
+      await addToCart(item.id, 1, {
+        name: item.name,
+        price: Number(item.price),
+        image_url: item.image_url,
+        restaurantName: restaurant?.name,
+      });
+    } catch (err: any) {
+      if (err?.status !== 409) {
+        setCartErrorMessage(err.message || "Failed to add item to cart.");
+        setTimeout(() => setCartErrorMessage(null), 4000);
+      }
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
-        <div className="w-full h-64 sm:h-80 bg-slate-200 dark:bg-slate-800 rounded-3xl animate-pulse" />
-        <CardSkeleton count={6} />
+      <div className="max-w-7xl mx-auto px-4 py-24 flex flex-col items-center justify-center text-slate-400">
+        <Loader2 className="w-10 h-10 animate-spin text-orange-500 mb-3" />
+        <p className="text-sm font-medium">Loading restaurant menu...</p>
       </div>
     );
   }
 
-  if (!restaurant) {
+  if (error || !restaurant) {
     return (
-      <div className="max-w-md mx-auto py-20 text-center space-y-4">
-        <h2 className="text-xl font-bold">Restaurant not found</h2>
-        <Link href="/restaurants">
-          <Button variant="primary">Back to Restaurants</Button>
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-950/60 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Store className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          Restaurant Not Found
+        </h2>
+        <p className="text-sm text-slate-500 mt-2 mb-6">
+          {error || "The requested restaurant is unavailable or unverified."}
+        </p>
+        <Link href="/">
+          <Button variant="primary">Browse Other Restaurants</Button>
         </Link>
       </div>
     );
   }
 
-  // Extract unique categories from food items
   const categories = [
     "All",
-    ...Array.from(new Set(foodItems.map((f) => f.category || "Special"))),
+    ...Array.from(new Set(foodItems.map((f) => f.category))).filter(Boolean),
   ];
 
-  // Filter food items
-  const filteredFoodItems = foodItems.filter((item) => {
-    const matchesCategory =
-      activeCategory === "All" || item.category === activeCategory;
-    const matchesSearch =
-      !searchMenu.trim() ||
-      item.name.toLowerCase().includes(searchMenu.toLowerCase()) ||
-      (item.description &&
-        item.description.toLowerCase().includes(searchMenu.toLowerCase()));
+  const filteredFoods =
+    selectedCategory === "All"
+      ? foodItems
+      : foodItems.filter((f) => f.category === selectedCategory);
 
-    return matchesCategory && matchesSearch;
-  });
-
-  const displayCover =
+  const displayImage =
     restaurant.image_url ||
-    "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&auto=format&fit=crop&q=80";
+    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80";
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 pb-28">
-      {/* Back Link */}
-      <div>
-        <Link
-          href="/restaurants"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-orange-500 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to All Restaurants</span>
-        </Link>
-      </div>
+    <div className="space-y-8 pb-16">
+      {/* Header Banner */}
+      <div className="relative w-full h-64 sm:h-80 lg:h-96 bg-slate-900 overflow-hidden">
+        <Image
+          src={displayImage}
+          alt={restaurant.name}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-60"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
-      {/* Hero Cover Card */}
-      <div className="relative w-full rounded-3xl overflow-hidden bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl">
-        <div className="relative w-full h-64 sm:h-80 lg:h-96">
-          <Image
-            src={displayCover}
-            alt={restaurant.name}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover brightness-75"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        {/* Back Link */}
+        <div className="absolute top-6 left-4 sm:left-8 z-10">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/50 hover:bg-black/70 backdrop-blur-md text-white text-xs font-semibold transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>All Restaurants</span>
+          </Link>
+        </div>
 
-          {/* Top Badges */}
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+        {/* Restaurant Header Info Overlay */}
+        <div className="absolute bottom-6 left-4 sm:left-8 right-4 sm:right-8 z-10 max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
               {restaurant.is_open ? (
-                <Badge variant="success" size="sm" className="bg-emerald-500 text-white font-bold">
+                <Badge
+                  variant="success"
+                  size="sm"
+                  className="bg-emerald-500 text-white font-bold border-0 shadow-sm"
+                >
                   Open Now
                 </Badge>
               ) : (
-                <Badge variant="neutral" size="sm" className="bg-slate-900/90 text-slate-300 font-bold">
-                  Currently Closed
+                <Badge
+                  variant="danger"
+                  size="sm"
+                  className="bg-red-500 text-white font-bold border-0 shadow-sm"
+                >
+                  Closed for Orders
                 </Badge>
+              )}
+
+              {restaurant.is_verified && (
+                <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm text-sky-700 text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                  <ShieldCheck className="w-3.5 h-3.5 fill-sky-600 text-white" />
+                  <span>Verified Partner</span>
+                </div>
               )}
             </div>
 
-            {restaurant.is_verified && (
-              <div className="flex items-center gap-1 bg-white/95 text-sky-600 font-bold text-xs px-3 py-1 rounded-full shadow-md">
-                <ShieldCheck className="w-4 h-4 fill-sky-600 text-white" />
-                <span>Verified Partner</span>
-              </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
+              {restaurant.name}
+            </h1>
+
+            {restaurant.description && (
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                {restaurant.description}
+              </p>
             )}
-          </div>
 
-          {/* Bottom Info Overlay */}
-          <div className="absolute bottom-6 left-6 right-6 text-white space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-                {restaurant.name}
-              </h1>
-              <div className="flex items-center gap-1 bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded-xl shadow-md">
-                <Star className="w-3.5 h-3.5 fill-white" />
-                <span>{(restaurant.rating || 4.9).toFixed(1)}</span>
-              </div>
-            </div>
-
-            <p className="text-xs sm:text-sm text-slate-300 flex items-center gap-2">
+            <div className="flex items-center gap-2 text-xs text-slate-300 mt-2">
               <MapPin className="w-3.5 h-3.5 text-orange-400 shrink-0" />
               <span>{restaurant.address}</span>
-            </p>
-
-            <div className="flex items-center gap-4 text-xs font-medium text-slate-300 pt-1">
-              <span className="flex items-center gap-1 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-lg">
-                <Clock className="w-3.5 h-3.5 text-orange-400" />
-                {restaurant.delivery_time || "25-35 min"}
-              </span>
-              <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-lg">
-                {restaurant.cuisine || "Multi-Cuisine"}
-              </span>
             </div>
           </div>
-        </div>
 
-        {restaurant.description && (
-          <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            {restaurant.description}
+          <Link href="/cart">
+            <Button
+              variant="primary"
+              size="md"
+              className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg shrink-0"
+            >
+              <ShoppingBag className="w-4 h-4 mr-1.5" />
+              <span>View Cart</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Cart Feedback Alerts */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {cartSuccessMessage && (
+          <div className="p-3.5 rounded-2xl bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+            <span>{cartSuccessMessage}</span>
+          </div>
+        )}
+
+        {cartErrorMessage && (
+          <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+            <span>{cartErrorMessage}</span>
           </div>
         )}
       </div>
 
-      {/* Closed Restaurant Alert */}
-      {!restaurant.is_open && (
-        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
-          <div>
-            <span className="font-bold block">Restaurant is Currently Closed</span>
-            <span className="text-xs text-amber-700 dark:text-amber-400 block mt-0.5">
-              You can browse the menu, but food ordering is temporarily paused until the kitchen re-opens.
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Menu Header & Search */}
-      <div className="space-y-4 pt-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <UtensilsCrossed className="w-6 h-6 text-orange-500" />
-              Restaurant Menu
-            </h2>
-            <p className="text-xs text-slate-500">
-              {filteredFoodItems.length} dishes available to order
-            </p>
-          </div>
-
-          {/* Menu Search */}
-          <div className="relative w-full sm:w-72 flex items-center">
-            <Search className="w-4 h-4 absolute left-3.5 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search this menu..."
-              value={searchMenu}
-              onChange={(e) => setSearchMenu(e.target.value)}
-              className="w-full bg-white dark:bg-slate-900 rounded-full pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 border border-slate-200 dark:border-slate-800 focus:border-orange-500 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Category Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+      {/* Main Menu Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
           {categories.map((cat) => (
             <button
               key={cat}
               type="button"
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                activeCategory === cat
-                  ? "bg-orange-500 text-white shadow-sm shadow-orange-500/25"
-                  : "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-orange-400"
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 ${
+                selectedCategory === cat
+                  ? "bg-orange-500 text-white shadow-sm shadow-orange-500/30"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-orange-400"
               }`}
             >
               {cat}
             </button>
           ))}
         </div>
+
+        {/* Food Items Grid */}
+        {filteredFoods.length === 0 ? (
+          <div className="py-16 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+            <Store className="w-10 h-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm font-semibold">No food items found in this category.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredFoods.map((food) => (
+              <FoodCard
+                key={food.id}
+                foodItem={{
+                  ...food,
+                  restaurant_name: restaurant.name,
+                }}
+                onAddToCart={() => handleAddToCart(food)}
+              />
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Food Items Grid */}
-      {filteredFoodItems.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredFoodItems.map((food) => (
-            <FoodCard key={food.id} foodItem={food} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 space-y-2">
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            No items found matching &quot;{searchMenu}&quot;
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setSearchMenu("");
-              setActiveCategory("All");
-            }}
-            className="text-xs text-orange-600 font-bold hover:underline"
-          >
-            Clear Search
-          </button>
-        </div>
-      )}
-
-      {/* Floating Bottom Cart Bar on Mobile/Desktop */}
-      {totalItemsCount > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 max-w-lg mx-auto z-40 animate-in slide-in-from-bottom-4 duration-200">
-          <Link href="/cart">
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-orange-600 text-white shadow-2xl shadow-orange-600/40 hover:bg-orange-700 transition-all cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                  <ShoppingBag className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <span className="font-extrabold text-sm block">
-                    {totalItemsCount} {totalItemsCount === 1 ? "item" : "items"} in cart
-                  </span>
-                  <span className="text-xs text-orange-200">
-                    Subtotal: ₹{cart?.subtotal || "0.00"}
-                  </span>
-                </div>
-              </div>
-
-              <span className="font-black text-xs uppercase tracking-wider bg-white text-orange-600 px-4 py-2 rounded-xl">
-                View Cart →
-              </span>
-            </div>
-          </Link>
-        </div>
-      )}
-
-      {/* Cart Conflict Dialog */}
-      <CartConflictModal />
     </div>
   );
 }

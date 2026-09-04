@@ -4,21 +4,16 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Clock,
   Edit2,
   MapPin,
   Plus,
   ShieldCheck,
-  Sparkles,
-  Star,
   Store,
-  Utensils,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { SellerNavTabs } from "@/components/seller/SellerNavTabs";
 import { RestaurantStatusCard } from "@/components/seller/RestaurantStatusCard";
 import { RestaurantForm } from "@/components/seller/RestaurantForm";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/Loading";
 import { useSellerRestaurant } from "@/hooks/useSellerRestaurant";
@@ -41,7 +36,7 @@ export default function SellerRestaurantPage() {
 
   return (
     <ProtectedRoute allowedRoles={["SELLER"]}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-8 text-left">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -195,7 +190,7 @@ export default function SellerRestaurantPage() {
                           Public Menu Page
                         </span>
                         <Link
-                          href={`/restaurants/${restaurant.id}`}
+                          href={`/#restaurants`}
                           className="text-xs font-bold text-orange-600 hover:underline mt-2 inline-flex items-center gap-1"
                         >
                           <span>Preview Customer Page →</span>

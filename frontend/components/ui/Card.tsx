@@ -1,98 +1,60 @@
-import React, { HTMLAttributes, forwardRef } from "react";
+import React from "react";
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   isHoverable?: boolean;
-  isGlass?: boolean;
 }
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className = "", isHoverable = false, isGlass = false, children, ...props }, ref) => {
-    const glassStyle = isGlass
-      ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md"
-      : "bg-white dark:bg-slate-900";
-
-    const hoverStyle = isHoverable
-      ? "transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/40 hover:-translate-y-1"
-      : "";
-
-    return (
-      <div
-        ref={ref}
-        className={`rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden ${glassStyle} ${hoverStyle} ${className}`}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
-);
-
-Card.displayName = "Card";
-
-export function CardHeader({
-  className = "",
+export function Card({
   children,
+  className = "",
+  isHoverable = false,
   ...props
-}: HTMLAttributes<HTMLDivElement>) {
+}: CardProps) {
   return (
-    <div className={`p-5 pb-3 flex flex-col space-y-1.5 ${className}`} {...props}>
+    <div
+      className={`rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm ${
+        isHoverable
+          ? "transition-all duration-200 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700"
+          : ""
+      } ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );
 }
 
-export function CardTitle({
-  className = "",
+export function CardHeader({
   children,
-  ...props
-}: HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3
-      className={`text-lg font-bold text-slate-900 dark:text-white tracking-tight ${className}`}
-      {...props}
-    >
-      {children}
-    </h3>
-  );
-}
-
-export function CardDescription({
   className = "",
-  children,
   ...props
-}: HTMLAttributes<HTMLParagraphElement>) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <p
-      className={`text-sm text-slate-500 dark:text-slate-400 ${className}`}
-      {...props}
-    >
+    <div className={`p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80 ${className}`} {...props}>
       {children}
-    </p>
+    </div>
   );
 }
 
 export function CardContent({
-  className = "",
   children,
+  className = "",
   ...props
-}: HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`p-5 pt-0 ${className}`} {...props}>
+    <div className={`p-4 sm:p-5 ${className}`} {...props}>
       {children}
     </div>
   );
 }
 
 export function CardFooter({
-  className = "",
   children,
+  className = "",
   ...props
-}: HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={`p-5 pt-0 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 mt-auto ${className}`}
-      {...props}
-    >
+    <div className={`p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/30 ${className}`} {...props}>
       {children}
     </div>
   );

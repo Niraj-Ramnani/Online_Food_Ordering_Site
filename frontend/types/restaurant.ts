@@ -5,16 +5,14 @@ export interface Restaurant {
   description?: string | null;
   address: string;
   image_url?: string | null;
-  is_verified: boolean;
-  is_open: boolean;
+  is_verified?: boolean;
+  is_open?: boolean;
   cuisine?: string;
+  cuisine_type?: string;
+  phone_number?: string;
   rating?: number;
-  review_count?: number;
   delivery_time?: string;
   price_range?: string;
   created_at?: string;
   updated_at?: string;
 }
-
-export type PublicRestaurantResponse = Restaurant;
-export type RestaurantResponse = Restaurant;

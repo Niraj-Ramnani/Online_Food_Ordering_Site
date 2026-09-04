@@ -6,6 +6,7 @@ from app.controllers.admin_controller import AdminController
 from app.dependencies.auth import require_role
 from app.models.user import User, UserRole
 from app.repositories.food_item_repository import FoodItemRepository
+from app.repositories.notification_repository import NotificationRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.restaurant_repository import RestaurantRepository
 from app.repositories.user_repository import UserRepository
@@ -21,6 +22,7 @@ from app.schemas.food_item import FoodItemResponse
 from app.schemas.order import OrderResponse
 from app.schemas.restaurant import RestaurantResponse
 from app.services.admin_service import AdminService
+from app.services.notification_service import NotificationService
 
 router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
 
@@ -31,12 +33,15 @@ def get_admin_controller(db: Session = Depends(get_db)) -> AdminController:
     restaurant_repo = RestaurantRepository(db)
     food_repo = FoodItemRepository(db)
     order_repo = OrderRepository(db)
+    notification_repo = NotificationRepository(db)
+    notification_service = NotificationService(notification_repo)
     service = AdminService(
         db=db,
         user_repo=user_repo,
         restaurant_repo=restaurant_repo,
         food_repo=food_repo,
         order_repo=order_repo,
+        notification_service=notification_service,
     )
     return AdminController(service)
 

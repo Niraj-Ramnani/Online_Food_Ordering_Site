@@ -1,62 +1,57 @@
 import { fetchApi } from "./api";
-import { AddressResponse, CreateAddressRequest, UpdateAddressRequest } from "@/types";
+import { Address, CreateAddressDto, UpdateAddressDto } from "@/types/address";
 
 export const addressService = {
-  /**
-   * Fetch all saved addresses for the authenticated user.
-   */
-  async getAddresses(): Promise<AddressResponse[]> {
-    return fetchApi<AddressResponse[]>("/addresses", {
-      method: "GET",
-    });
+  async getAddresses(): Promise<Address[]> {
+    return fetchApi<Address[]>("/addresses");
   },
 
-  /**
-   * Fetch a single address by ID.
-   */
-  async getAddressById(addressId: number): Promise<AddressResponse> {
-    return fetchApi<AddressResponse>(`/addresses/${addressId}`, {
-      method: "GET",
-    });
+  async getAddressById(id: number): Promise<Address> {
+    return fetchApi<Address>(`/addresses/${id}`);
   },
 
-  /**
-   * Create a new delivery address.
-   */
-  async createAddress(data: CreateAddressRequest): Promise<AddressResponse> {
-    return fetchApi<AddressResponse>("/addresses", {
+  async createAddress(data: CreateAddressDto): Promise<Address> {
+    const payload = {
+      label: data.label || data.title || "Home",
+      address_line: data.address_line,
+      city: data.city,
+      state: data.state,
+      pincode: data.pincode,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      is_default: data.is_default ?? false,
+    };
+    return fetchApi<Address>("/addresses", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   },
 
-  /**
-   * Update an existing delivery address.
-   */
-  async updateAddress(
-    addressId: number,
-    data: UpdateAddressRequest
-  ): Promise<AddressResponse> {
-    return fetchApi<AddressResponse>(`/addresses/${addressId}`, {
+  async updateAddress(id: number, data: UpdateAddressDto): Promise<Address> {
+    const payload = {
+      ...(data.label || data.title ? { label: data.label || data.title } : {}),
+      ...(data.address_line ? { address_line: data.address_line } : {}),
+      ...(data.city ? { city: data.city } : {}),
+      ...(data.state ? { state: data.state } : {}),
+      ...(data.pincode ? { pincode: data.pincode } : {}),
+      ...(data.latitude !== undefined ? { latitude: data.latitude } : {}),
+      ...(data.longitude !== undefined ? { longitude: data.longitude } : {}),
+      ...(data.is_default !== undefined ? { is_default: data.is_default } : {}),
+    };
+    return fetchApi<Address>(`/addresses/${id}`, {
       method: "PUT",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   },
 
-  /**
-   * Mark an address as the sole default delivery address.
-   */
-  async setDefaultAddress(addressId: number): Promise<AddressResponse> {
-    return fetchApi<AddressResponse>(`/addresses/${addressId}/default`, {
+  async setDefaultAddress(id: number): Promise<Address> {
+    return fetchApi<Address>(`/addresses/${id}/default`, {
       method: "PATCH",
     });
   },
 
-  /**
-   * Delete an address by ID.
-   */
-  async deleteAddress(addressId: number): Promise<void> {
-    return fetchApi<void>(`/addresses/${addressId}`, {
+  async deleteAddress(id: number): Promise<void> {
+    return fetchApi<void>(`/addresses/${id}`, {
       method: "DELETE",
     });
   },

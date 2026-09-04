@@ -1,7 +1,8 @@
 export interface Address {
   id: number;
-  user_id?: number;
-  label: string;
+  user_id: number;
+  label?: string;
+  title?: string;
   address_line: string;
   city: string;
   state: string;
@@ -13,8 +14,9 @@ export interface Address {
   updated_at?: string;
 }
 
-export interface CreateAddressRequest {
-  label: string;
+export interface CreateAddressDto {
+  label?: string;
+  title?: string;
   address_line: string;
   city: string;
   state: string;
@@ -24,8 +26,9 @@ export interface CreateAddressRequest {
   is_default?: boolean;
 }
 
-export interface UpdateAddressRequest {
+export interface UpdateAddressDto {
   label?: string;
+  title?: string;
   address_line?: string;
   city?: string;
   state?: string;
@@ -34,5 +37,3 @@ export interface UpdateAddressRequest {
   longitude?: number | null;
   is_default?: boolean;
 }
-
-export type AddressResponse = Address;

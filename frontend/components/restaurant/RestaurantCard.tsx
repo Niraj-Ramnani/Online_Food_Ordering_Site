@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Clock, MapPin, ShieldCheck, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -13,12 +12,11 @@ export interface RestaurantCardProps {
 
 export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
   const {
-    id,
     name,
     address,
     image_url,
     is_verified,
-    is_open,
+    is_open = true,
     cuisine = "Multi-Cuisine",
     rating = 4.8,
     delivery_time = "25-35 min",
@@ -29,13 +27,13 @@ export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
     image_url ||
     "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80";
 
-  const cardElement = (
+  return (
     <Card
       isHoverable
       onClick={onClick}
       className="group cursor-pointer flex flex-col h-full bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800"
     >
-      {/* Image Container with Badges */}
+      {/* Cover Image */}
       <div className="relative w-full h-48 overflow-hidden bg-slate-100 dark:bg-slate-800">
         <Image
           src={displayImage}
@@ -49,11 +47,19 @@ export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
           {is_open ? (
-            <Badge variant="success" size="sm" className="bg-emerald-500 text-white border-0 shadow-sm font-bold">
+            <Badge
+              variant="success"
+              size="sm"
+              className="bg-emerald-500 text-white font-bold border-0 shadow-sm"
+            >
               Open Now
             </Badge>
           ) : (
-            <Badge variant="neutral" size="sm" className="bg-slate-900/85 text-slate-300 border-0 shadow-sm">
+            <Badge
+              variant="neutral"
+              size="sm"
+              className="bg-slate-900/85 text-slate-300 font-bold border-0 shadow-sm"
+            >
               Closed
             </Badge>
           )}
@@ -66,7 +72,7 @@ export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
           )}
         </div>
 
-        {/* Bottom Image Overlay Info */}
+        {/* Bottom Overlay Info */}
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
           <span className="flex items-center gap-1 font-semibold bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg">
             <Clock className="w-3.5 h-3.5 text-orange-400" />
@@ -78,7 +84,7 @@ export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
         </div>
       </div>
 
-      {/* Card Content */}
+      {/* Content */}
       <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div>
           <div className="flex items-start justify-between gap-2">
@@ -102,15 +108,5 @@ export function RestaurantCard({ restaurant, onClick }: RestaurantCardProps) {
         </div>
       </CardContent>
     </Card>
-  );
-
-  if (onClick) {
-    return cardElement;
-  }
-
-  return (
-    <Link href={`/restaurants/${id}`} className="block h-full">
-      {cardElement}
-    </Link>
   );
 }

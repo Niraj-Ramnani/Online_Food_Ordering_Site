@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ImageUpload } from "./ImageUpload";
 import { CreateRestaurantRequest, Restaurant, UpdateRestaurantRequest } from "@/types";
+import { LocationPicker, DetectedLocation } from "@/components/location/LocationPicker";
 
 interface RestaurantFormProps {
   isOpen: boolean;
@@ -44,6 +45,17 @@ export function RestaurantForm({
     setErrors({});
     setApiError(null);
   }, [initialData, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -85,10 +97,10 @@ export function RestaurantForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 animate-in zoom-in-95 duration-200 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-lg max-h-[85vh] flex flex-col rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 animate-in zoom-in-95 duration-200 text-left overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
               <Store className="w-5 h-5" />
@@ -112,15 +124,27 @@ export function RestaurantForm({
           </button>
         </div>
 
-        {/* Error */}
-        {apiError && (
-          <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-            <span>{apiError}</span>
-          </div>
-        )}
+        {/* Scrollable Form Body */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-4 pt-4">
+          {/* Error */}
+          {apiError && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+              <span>{apiError}</span>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* GPS Auto-Detect Picker */}
+          <LocationPicker
+            onLocationDetected={(loc: DetectedLocation) => {
+              const parts = [loc.address_line, loc.city, loc.state, loc.pincode].filter(Boolean);
+              const fullAddr = parts.join(", ");
+              setAddress(fullAddr);
+              if (errors.address) setErrors((prev) => ({ ...prev, address: undefined }));
+            }}
+          />
+
+          <form onSubmit={handleSubmit} className="space-y-4">
           {/* Restaurant Name */}
           <Input
             label="Restaurant Name"
@@ -135,8 +159,8 @@ export function RestaurantForm({
 
           {/* Physical Address */}
           <Input
-            label="Physical Address / Location"
-            placeholder="e.g. 742 Evergreen Terrace, Little Italy, Jaipur"
+            label="Physical Address / Area"
+            placeholder="e.g. 45 C-Scheme, Ashok Nagar, Jaipur"
             value={address}
             onChange={(e) => {
               setAddress(e.target.value);
@@ -188,6 +212,7 @@ export function RestaurantForm({
             </Button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

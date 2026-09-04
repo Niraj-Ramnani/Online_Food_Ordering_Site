@@ -1,54 +1,36 @@
 import { fetchApi } from "./api";
-import { CartResponse } from "@/types";
+import { AddToCartDto, Cart, UpdateCartItemDto } from "@/types/cart";
 
 export const cartService = {
-  /**
-   * Fetch authenticated user's active cart.
-   */
-  async getCart(): Promise<CartResponse> {
-    return fetchApi<CartResponse>("/cart", {
-      method: "GET",
-    });
+  async getCart(): Promise<Cart> {
+    return fetchApi<Cart>("/cart");
   },
 
-  /**
-   * Add a food item to the active cart.
-   * Throws 409 ApiError if cart has items from another restaurant.
-   */
-  async addToCart(foodItemId: number, quantity: number = 1): Promise<CartResponse> {
-    return fetchApi<CartResponse>("/cart/items", {
+  async addToCart(data: AddToCartDto): Promise<Cart> {
+    return fetchApi<Cart>("/cart/items", {
       method: "POST",
-      body: JSON.stringify({
-        food_item_id: foodItemId,
-        quantity,
-      }),
+      body: JSON.stringify(data),
     });
   },
 
-  /**
-   * Update the quantity of an existing item in the cart.
-   */
-  async updateQuantity(cartItemId: number, quantity: number): Promise<CartResponse> {
-    return fetchApi<CartResponse>(`/cart/items/${cartItemId}`, {
+  async updateItemQuantity(
+    cartItemId: number,
+    data: UpdateCartItemDto
+  ): Promise<Cart> {
+    return fetchApi<Cart>(`/cart/items/${cartItemId}`, {
       method: "PATCH",
-      body: JSON.stringify({ quantity }),
+      body: JSON.stringify(data),
     });
   },
 
-  /**
-   * Remove a single item from the cart.
-   */
-  async removeItem(cartItemId: number): Promise<CartResponse> {
-    return fetchApi<CartResponse>(`/cart/items/${cartItemId}`, {
+  async removeItem(cartItemId: number): Promise<Cart> {
+    return fetchApi<Cart>(`/cart/items/${cartItemId}`, {
       method: "DELETE",
     });
   },
 
-  /**
-   * Clear all items from the active cart.
-   */
-  async clearCart(): Promise<CartResponse> {
-    return fetchApi<CartResponse>("/cart", {
+  async clearCart(): Promise<Cart> {
+    return fetchApi<Cart>("/cart", {
       method: "DELETE",
     });
   },

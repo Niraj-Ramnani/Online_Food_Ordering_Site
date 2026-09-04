@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -10,6 +11,8 @@ from app.repositories.food_item_repository import FoodItemRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.restaurant_repository import RestaurantRepository
 from app.repositories.user_repository import UserRepository
+from app.services.notification_service import NotificationService
+from app.websocket.connection_manager import manager
 
 
 class AdminService:
@@ -22,12 +25,25 @@ class AdminService:
         restaurant_repo: RestaurantRepository,
         food_repo: FoodItemRepository,
         order_repo: OrderRepository,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self.db = db
         self.user_repo = user_repo
         self.restaurant_repo = restaurant_repo
         self.food_repo = food_repo
         self.order_repo = order_repo
+        self.notification_service = notification_service
+
+    def _dispatch_websocket_event(self, user_id: int, payload: dict) -> None:
+        """Helper to safely schedule async WebSocket event delivery."""
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(manager.send_personal_message(user_id, payload))
+        except RuntimeError:
+            try:
+                asyncio.run(manager.send_personal_message(user_id, payload))
+            except Exception:
+                pass
 
     def get_users(self) -> list[User]:
         """Fetch all registered users."""
@@ -43,7 +59,16 @@ class AdminService:
                 detail="User not found.",
             )
         user.is_active = is_active
-        return self.user_repo.update(user)
+        updated = self.user_repo.update(user)
+        self._dispatch_websocket_event(
+            user_id,
+            {
+                "type": "user_status_updated",
+                "user_id": user_id,
+                "is_active": is_active,
+            },
+        )
+        return updated
 
     def get_restaurants(self) -> list[Restaurant]:
         """Fetch all restaurants regardless of verification status."""
@@ -59,7 +84,34 @@ class AdminService:
                 detail="Restaurant not found.",
             )
         restaurant.is_verified = is_verified
-        return self.restaurant_repo.update(restaurant)
+        updated = self.restaurant_repo.update(restaurant)
+
+        # Notify seller and dispatch real-time WebSocket event
+        if updated.seller_id:
+            if self.notification_service:
+                title = "Restaurant Verified!" if is_verified else "Verification Status Changed"
+                message = (
+                    f"Congratulations! Your restaurant '{updated.name}' is now a Verified Partner."
+                    if is_verified
+                    else f"Your restaurant '{updated.name}' verification has been updated by admin."
+                )
+                self.notification_service.create_and_send_notification(
+                    user_id=updated.seller_id,
+                    title=title,
+                    message=message,
+                    notification_type="RESTAURANT_VERIFIED" if is_verified else "RESTAURANT_UNVERIFIED",
+                    sound=True,
+                )
+            self._dispatch_websocket_event(
+                updated.seller_id,
+                {
+                    "type": "restaurant_verified",
+                    "restaurant_id": updated.id,
+                    "is_verified": is_verified,
+                },
+            )
+
+        return updated
 
     def update_restaurant_status(self, restaurant_id: int, is_open: bool) -> Restaurant:
         """Open or close a restaurant administratively."""
@@ -70,7 +122,19 @@ class AdminService:
                 detail="Restaurant not found.",
             )
         restaurant.is_open = is_open
-        return self.restaurant_repo.update(restaurant)
+        updated = self.restaurant_repo.update(restaurant)
+
+        if updated.seller_id:
+            self._dispatch_websocket_event(
+                updated.seller_id,
+                {
+                    "type": "restaurant_status_updated",
+                    "restaurant_id": updated.id,
+                    "is_open": is_open,
+                },
+            )
+
+        return updated
 
     def get_food_items(self) -> list[FoodItem]:
         """Fetch all food items platform-wide."""

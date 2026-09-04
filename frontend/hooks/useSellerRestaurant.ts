@@ -8,6 +8,8 @@ import {
   UpdateRestaurantRequest,
 } from "@/types";
 import { ApiError } from "@/services/api";
+import { useOrderWebSocket } from "./useOrderWebSocket";
+import { WebSocketEvent } from "@/types/notification";
 
 export function useSellerRestaurant() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -35,6 +37,23 @@ export function useSellerRestaurant() {
   useEffect(() => {
     fetchRestaurant();
   }, [fetchRestaurant]);
+
+  // Real-time synchronization when admin verifies or updates restaurant status
+  const handleWebSocketEvent = useCallback(
+    (event: WebSocketEvent) => {
+      if (
+        event.type === "restaurant_verified" ||
+        event.type === "restaurant_status_updated" ||
+        event.notification_type === "RESTAURANT_VERIFIED" ||
+        event.notification_type === "RESTAURANT_UNVERIFIED"
+      ) {
+        fetchRestaurant();
+      }
+    },
+    [fetchRestaurant]
+  );
+
+  useOrderWebSocket(handleWebSocketEvent);
 
   const createRestaurant = async (data: CreateRestaurantRequest): Promise<Restaurant> => {
     const newRestaurant = await sellerRestaurantService.createRestaurant(data);

@@ -1,31 +1,17 @@
 import { fetchApi } from "./api";
-import { Restaurant, FoodItem } from "@/types";
+import { Restaurant } from "@/types/restaurant";
+import { FoodItem } from "@/types/food";
 
 export const restaurantService = {
-  /**
-   * Fetch all verified restaurants for public browsing.
-   */
-  async getRestaurants(): Promise<Restaurant[]> {
-    return fetchApi<Restaurant[]>("/restaurants", {
-      method: "GET",
-    });
+  async getPublicRestaurants(): Promise<Restaurant[]> {
+    return fetchApi<Restaurant[]>("/restaurants");
   },
 
-  /**
-   * Fetch details for a specific verified restaurant.
-   */
-  async getRestaurantById(restaurantId: number): Promise<Restaurant> {
-    return fetchApi<Restaurant>(`/restaurants/${restaurantId}`, {
-      method: "GET",
-    });
+  async getPublicRestaurant(restaurantId: number): Promise<Restaurant> {
+    return fetchApi<Restaurant>(`/restaurants/${restaurantId}`);
   },
 
-  /**
-   * Fetch available menu food items for a specific restaurant.
-   */
   async getRestaurantFoodItems(restaurantId: number): Promise<FoodItem[]> {
-    return fetchApi<FoodItem[]>(`/restaurants/${restaurantId}/food-items`, {
-      method: "GET",
-    });
+    return fetchApi<FoodItem[]>(`/restaurants/${restaurantId}/food-items`);
   },
 };

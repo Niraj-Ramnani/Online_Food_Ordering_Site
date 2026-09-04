@@ -21,9 +21,10 @@ export function LoginForm() {
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {};
+
     if (!email.trim()) {
       newErrors.email = "Email address is required";
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
@@ -43,12 +44,9 @@ export function LoginForm() {
 
     setIsSubmitting(true);
     try {
-      const user = await login({
-        email: email.trim().toLowerCase(),
-        password,
-      });
+      const user = await login({ email: email.trim(), password });
 
-      // Role-based redirection
+      // Role-based redirect
       if (user.role === "SELLER") {
         router.push("/seller/dashboard");
       } else if (user.role === "ADMIN") {
@@ -57,102 +55,97 @@ export function LoginForm() {
         router.push("/");
       }
     } catch (err: any) {
-      setApiError(err.message || "Invalid email or password. Please try again.");
+      setApiError(
+        err.message || "Invalid credentials. Please verify your email and password."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 w-full max-w-md">
-      {/* API Error Banner */}
+    <div className="w-full max-w-md space-y-6">
+      <div className="space-y-2 text-center sm:text-left">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          Welcome back!
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Enter your credentials to access your account
+        </p>
+      </div>
+
       {apiError && (
-        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-sm flex items-start gap-3 animate-in fade-in duration-200">
-          <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
-          <div className="flex-1">
-            <span className="font-semibold block">Authentication failed</span>
-            <span className="text-xs text-rose-600 dark:text-rose-400 mt-0.5 block">
-              {apiError}
-            </span>
-          </div>
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs sm:text-sm flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+          <span>{apiError}</span>
         </div>
       )}
 
-      {/* Email Input */}
-      <Input
-        label="Email Address"
-        type="email"
-        placeholder="you@example.com"
-        value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
-        }}
-        error={errors.email}
-        leftIcon={<Mail className="w-4 h-4" />}
-        autoComplete="email"
-      />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Email Address"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
+          error={errors.email}
+          leftIcon={<Mail className="w-4 h-4" />}
+          autoComplete="email"
+        />
 
-      {/* Password Input */}
-      <Input
-        label="Password"
-        type={showPassword ? "text" : "password"}
-        placeholder="••••••••"
-        value={password}
-        onChange={(e) => {
-          setPassword(e.target.value);
-          if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-        }}
-        error={errors.password}
-        leftIcon={<Lock className="w-4 h-4" />}
-        rightIcon={
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer focus:outline-none"
-            tabIndex={-1}
+        <Input
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
+          error={errors.password}
+          leftIcon={<Lock className="w-4 h-4" />}
+          rightIcon={
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          }
+          autoComplete="current-password"
+        />
+
+        <div className="pt-2">
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full font-bold"
+            isLoading={isSubmitting}
           >
-            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        }
-        autoComplete="current-password"
-      />
+            Sign In
+          </Button>
+        </div>
+      </form>
 
-      {/* Forgot Password Placeholder / Helper */}
-      <div className="flex items-center justify-between text-xs pt-1">
-        <label className="flex items-center gap-2 cursor-pointer text-slate-600 dark:text-slate-400 select-none">
-          <input
-            type="checkbox"
-            className="rounded border-slate-300 text-orange-500 focus:ring-orange-500"
-          />
-          <span>Remember me</span>
-        </label>
-        <span className="text-orange-600 hover:underline cursor-pointer">
-          Forgot password?
-        </span>
-      </div>
-
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        variant="primary"
-        size="lg"
-        isLoading={isSubmitting}
-        className="w-full text-base font-bold shadow-lg shadow-orange-500/25"
-      >
-        Sign In to QuickBite
-      </Button>
-
-      {/* Footer Link */}
-      <p className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2">
+      <div className="text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"
-          className="font-bold text-orange-600 dark:text-orange-400 hover:underline"
+          className="font-bold text-orange-600 hover:text-orange-500 hover:underline"
         >
-          Create account
+          Create an account
         </Link>
-      </p>
-    </form>
+      </div>
+    </div>
   );
 }

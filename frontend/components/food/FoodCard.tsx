@@ -1,12 +1,9 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
-import { Check, Loader2, Plus, Star } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { FoodItem } from "@/types";
-import { useCart } from "@/hooks/useCart";
 
 export interface FoodCardProps {
   foodItem: FoodItem;
@@ -26,9 +23,6 @@ export function FoodCard({ foodItem, onAddToCart }: FoodCardProps) {
     is_veg = true,
   } = foodItem;
 
-  const { addToCart, isUpdating } = useCart();
-  const [justAdded, setJustAdded] = useState(false);
-
   const displayImage =
     image_url ||
     "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80";
@@ -36,29 +30,12 @@ export function FoodCard({ foodItem, onAddToCart }: FoodCardProps) {
   const formattedPrice =
     typeof price === "number" ? price.toFixed(2) : parseFloat(price || "0").toFixed(2);
 
-  const handleAddClick = async () => {
-    if (onAddToCart) {
-      onAddToCart();
-      return;
-    }
-
-    try {
-      const success = await addToCart(foodItem, 1);
-      if (success) {
-        setJustAdded(true);
-        setTimeout(() => setJustAdded(false), 1200);
-      }
-    } catch {
-      // Handled via CartContext / alerts
-    }
-  };
-
   return (
     <Card
       isHoverable
       className="group flex flex-col h-full bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800"
     >
-      {/* Food Photo Container */}
+      {/* Food Photo */}
       <div className="relative w-full h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
         <Image
           src={displayImage}
@@ -138,30 +115,15 @@ export function FoodCard({ foodItem, onAddToCart }: FoodCardProps) {
           <button
             type="button"
             disabled={!is_available}
-            onClick={handleAddClick}
-            className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer ${
+            onClick={onAddToCart}
+            className={`inline-flex items-center gap-1 text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
               is_available
-                ? justAdded
-                  ? "bg-emerald-600 text-white"
-                  : "bg-orange-500 text-white hover:bg-orange-600 shadow-sm shadow-orange-500/20 active:scale-95"
+                ? "bg-orange-500 text-white hover:bg-orange-600 shadow-sm shadow-orange-500/20 active:scale-95"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
             }`}
           >
-            {is_available ? (
-              justAdded ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Added</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add</span>
-                </>
-              )
-            ) : (
-              <span>Sold Out</span>
-            )}
+            <Plus className="w-3.5 h-3.5" />
+            <span>{is_available ? "Add" : "Sold Out"}</span>
           </button>
         </div>
       </CardContent>

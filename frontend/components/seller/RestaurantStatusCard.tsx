@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, PauseCircle, PlayCircle, ShieldCheck, Store } from "lucide-react";
+import { PauseCircle, PlayCircle, ShieldCheck, Store } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Restaurant } from "@/types";
 
 interface RestaurantStatusCardProps {
   restaurant: Restaurant;
-  onToggleStatus: (isOpen: boolean) => Promise<void>;
+  onToggleStatus: (isOpen: boolean) => Promise<any>;
 }
 
 export function RestaurantStatusCard({
@@ -27,7 +27,7 @@ export function RestaurantStatusCard({
   };
 
   return (
-    <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6 text-left">
       <div className="flex items-start gap-4">
         <div
           className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${

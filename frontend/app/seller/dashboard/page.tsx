@@ -6,13 +6,10 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  PackageCheck,
   Plus,
   ShieldCheck,
-  ShoppingBag,
   Sparkles,
   Store,
-  TrendingUp,
   Utensils,
 } from "lucide-react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -113,7 +110,7 @@ export default function SellerDashboardPage() {
                 }}
               />
             ) : (
-              <div className="p-8 rounded-3xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl shadow-orange-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="p-8 rounded-3xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl shadow-orange-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-6 text-left">
                 <div className="space-y-2 max-w-xl">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">
                     <Sparkles className="w-3.5 h-3.5" />
@@ -140,7 +137,7 @@ export default function SellerDashboardPage() {
             )}
 
             {/* Business Overview Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -217,7 +214,7 @@ export default function SellerDashboardPage() {
             </div>
 
             {/* Quick Actions Shortcuts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 text-left">
               <Link href="/seller/restaurant" className="block group">
                 <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-orange-500/50 hover:shadow-lg transition-all space-y-3">
                   <div className="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center">

@@ -70,6 +70,17 @@ export function FoodForm({
     setApiError(null);
   }, [initialData, isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const finalCategory =
@@ -123,10 +134,10 @@ export function FoodForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 animate-in zoom-in-95 duration-200 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-lg max-h-[85vh] flex flex-col rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 animate-in zoom-in-95 duration-200 text-left overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
               <Utensils className="w-5 h-5" />
@@ -150,15 +161,17 @@ export function FoodForm({
           </button>
         </div>
 
-        {/* Error */}
-        {apiError && (
-          <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-            <span>{apiError}</span>
-          </div>
-        )}
+        {/* Scrollable Form Body */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-4 pt-4">
+          {/* Error */}
+          {apiError && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+              <span>{apiError}</span>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="food-form" onSubmit={handleSubmit} className="space-y-4">
           {/* Item Name */}
           <Input
             label="Dish / Item Name"
@@ -276,6 +289,7 @@ export function FoodForm({
             </Button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

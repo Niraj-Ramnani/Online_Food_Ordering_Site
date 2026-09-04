@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { ImagePlus, Link as LinkIcon, Sparkles, Trash2 } from "lucide-react";
+import { ImagePlus, Link as LinkIcon, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 
 interface ImageUploadProps {
@@ -14,10 +14,10 @@ interface ImageUploadProps {
 
 const FOOD_IMAGE_PRESETS = [
   { name: "Pizza", url: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=800&auto=format&fit=crop&q=80" },
-  { name: "Burger", url: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=800&auto=format&fit=crop&q=80" },
+  { name: "Burger", url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80" },
   { name: "Biryani", url: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&auto=format&fit=crop&q=80" },
   { name: "Ramen", url: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&auto=format&fit=crop&q=80" },
-  { name: "Dessert", url: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&auto=format&fit=crop&q=80" },
+  { name: "Dessert", url: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=800&auto=format&fit=crop&q=80" },
 ];
 
 const RESTAURANT_IMAGE_PRESETS = [
@@ -45,7 +45,7 @@ export function ImageUpload({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 text-left">
       <label className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
         {label}
       </label>

@@ -332,13 +332,12 @@ class OrderService:
                 order_id=order.id,
                 sound=True,
             )
-            self._dispatch_websocket_event(
-                order.user_id,
-                {
-                    "type": "order_status_updated",
-                    "order_id": order.id,
-                    "status": new_status.value,
-                },
-            )
+            status_event = {
+                "type": "order_status_updated",
+                "order_id": order.id,
+                "status": new_status.value,
+            }
+            self._dispatch_websocket_event(order.user_id, status_event)
+            self._dispatch_websocket_event(seller_id, status_event)
 
         return updated_order

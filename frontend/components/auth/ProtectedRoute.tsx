@@ -1,53 +1,53 @@
 "use client";
 
-import React, { useEffect, ReactNode } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { LoadingSpinner } from "@/components/ui/Loading";
+import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children: React.ReactNode;
   allowedRoles?: UserRole[];
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  allowedRoles,
+}: ProtectedRouteProps) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return;
-
-    if (!isAuthenticated || !user) {
-      router.push("/login");
-      return;
-    }
-
-    if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-      // Role not allowed; redirect to role-specific dashboard
-      if (user.role === "SELLER") {
-        router.push("/seller/dashboard");
-      } else if (user.role === "ADMIN") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/");
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.replace("/login");
+      } else if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+        // Redirect to appropriate landing based on role
+        if (user.role === "SELLER") {
+          router.replace("/seller/dashboard");
+        } else if (user.role === "ADMIN") {
+          router.replace("/admin/dashboard");
+        } else {
+          router.replace("/");
+        }
       }
     }
   }, [isLoading, isAuthenticated, user, allowedRoles, router]);
 
   if (isLoading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center">
-        <LoadingSpinner size="lg" text="Checking your account..." />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8">
+        <LoadingSpinner size="lg" text="Verifying your account..." />
       </div>
     );
   }
 
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated) {
     return null;
   }
 
-  if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     return null;
   }
 

@@ -5,6 +5,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { ReplaceCartModal } from "@/components/cart/ReplaceCartModal";
+import { FloatingCartBar } from "@/components/cart/FloatingCartBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +20,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "QuickBite — Delicious Food Delivered Fast",
-  description: "Discover top-rated local restaurants, order your favorite food, and track deliveries in real-time with QuickBite.",
+  description:
+    "Discover top-rated local restaurants, order your favorite food, and track deliveries with QuickBite.",
 };
 
 export default function RootLayout({
@@ -27,16 +30,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
-    >
-      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-orange-500 selection:text-white">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased selection:bg-orange-500 selection:text-white">
         <AuthProvider>
           <CartProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
+            <ReplaceCartModal />
+            <FloatingCartBar />
           </CartProvider>
         </AuthProvider>
       </body>
